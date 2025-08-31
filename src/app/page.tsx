@@ -1,13 +1,16 @@
-// app/page.tsx
 "use client";
 
 import { useState } from "react";
 import RecipeCard from "@/components/RecipeCard";
+import SpinButton from "@/components/SpinButton";
+import { slugify } from "@/lib/slugify";
 
 type Recipe = {
   title: string;
   ingredients: string[];
   steps: string[];
+  // image: string;
+  slug: string;
 };
 
 export default function Home() {
@@ -25,7 +28,16 @@ export default function Home() {
       });
 
       const data = await res.json();
-      setRecipes(data.recipes || []);
+
+      const withSlugs = (data.recipes || []).map((r: any) => ({
+        ...r,
+        slug: slugify(r.title),
+      }));
+
+      // Save to localStorage
+      localStorage.setItem("recipes", JSON.stringify(withSlugs));
+
+      setRecipes(withSlugs);
     } catch (err) {
       console.error("Failed to fetch recipes:", err);
     } finally {
@@ -37,35 +49,37 @@ export default function Home() {
     <main className="flex flex-col items-center justify-center min-h-screen p-6 bg-gray-50">
       <h1 className="text-4xl font-bold mb-6">🍳 MealSpin</h1>
 
-      <input
-        type="text"
-        placeholder="Enter your ingredients..."
-        value={ingredients}
-        onChange={(e) => setIngredients(e.target.value)}
-        className="border rounded-lg p-3 w-80 mb-4 focus:outline-none focus:ring-2 focus:ring-orange-400"
-      />
+    <input
+      type="text"
+      placeholder="Enter your ingredients..."
+      value={ingredients}
+      onChange={(e) => setIngredients(e.target.value)}
+      className="
+        w-80 mb-4 px-4 py-2
+        border border-gray-400 rounded-lg
+        bg-[#FFF8F0] text-gray-800
+        placeholder-gray-500
+        focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-600
+        transition-colors duration-200
+      "
+    />
 
-      <button
-        onClick={handleSpin}
-        className="bg-orange-500 text-white px-6 py-2 rounded-lg disabled:opacity-50 mb-6"
-        disabled={loading}
-      >
-        {loading ? "Spinning..." : "Spin!"}
-      </button>
+      <SpinButton loading={loading} onClick={handleSpin} />
 
       {recipes.length === 0 && !loading && (
-        <p className="text-gray-500">
+        <p className="text-gray-500 mt-6">
           No recipes found. Try different ingredients.
         </p>
       )}
 
-      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 w-full max-w-7xl">
-        {recipes.map((r, i) => (
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 w-full max-w-7xl mt-6">
+        {recipes.map((r) => (
           <RecipeCard
-            key={i}
+            key={r.slug}
             title={r.title}
             ingredients={r.ingredients}
             steps={r.steps}
+            // image={r.image}
           />
         ))}
       </div>

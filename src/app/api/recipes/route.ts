@@ -15,13 +15,13 @@ export async function POST(req: Request) {
     - "instructions" must only contain cooking steps (no ingredient list repeats).
     - Return ONLY valid JSON in this format (no text outside JSON):
 
-    [
-      {
-        "title": "Recipe title",
-        "ingredients": ["2 oz chicken breast", "1 tsp salt", "1 tbsp olive oil"],
-        "instructions": ["Step 1...", "Step 2...", "Step 3..."]
-      }
-    ]`;
+    Example:
+    {
+      "title": "Lemon Garlic Chicken",
+      "ingredients": ["6 oz chicken breast", "1 tbsp olive oil", "2 cloves garlic"],
+      "instructions": ["Step 1...", "Step 2..."]
+    }
+    `;
 
     const response = await openai.chat.completions.create({
       // model: "gpt-4o-mini",
@@ -41,20 +41,12 @@ export async function POST(req: Request) {
     try {
       const json = JSON.parse(text);
       // inside route.ts after parsing JSON
-      recipes = json.map((r: any) => {
-        const ingredients = Array.isArray(r.ingredients) ? r.ingredients : [];
-        let steps = Array.isArray(r.instructions) ? r.instructions : [];
-
-        const cleanedSteps = steps.filter(
-          (s: string) => !ingredients.some((ing: string) => s.includes(ing))
-        );
-
-        return {
-          title: r.title || "Untitled Recipe",
-          ingredients,
-          steps: cleanedSteps,
-        };
-      });
+      recipes = json.map((r: any) => ({
+        title: r.title || "Untitled Recipe",
+        ingredients: Array.isArray(r.ingredients) ? r.ingredients : [],
+        steps: Array.isArray(r.instructions) ? r.instructions : []
+        // image: r.image || "https://source.unsplash.com/400x300/?food",
+      }));
     } catch (err) {
       console.error("❌ Failed to parse JSON", err);
       return NextResponse.json(
