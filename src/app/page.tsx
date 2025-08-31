@@ -1,12 +1,18 @@
+// app/page.tsx
 "use client";
 
 import { useState } from "react";
 import RecipeCard from "@/components/RecipeCard";
-import { parseRecipes } from "@/utils/parseRecipes";
+
+type Recipe = {
+  title: string;
+  ingredients: string[];
+  steps: string[];
+};
 
 export default function Home() {
   const [ingredients, setIngredients] = useState("");
-  const [recipes, setRecipes] = useState<{ title: string; steps: string }[]>([]);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(false);
 
   const handleSpin = async () => {
@@ -19,12 +25,9 @@ export default function Home() {
       });
 
       const data = await res.json();
-      if (data.recipes) {
-        const parsed = parseRecipes(data.recipes);
-        setRecipes(parsed);
-      }
+      setRecipes(data.recipes || []);
     } catch (err) {
-      console.error(err);
+      console.error("Failed to fetch recipes:", err);
     } finally {
       setLoading(false);
     }
@@ -50,10 +53,20 @@ export default function Home() {
         {loading ? "Spinning..." : "Spin!"}
       </button>
 
-      {/* Recipes Grid */}
-      <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full max-w-6xl">
+      {recipes.length === 0 && !loading && (
+        <p className="text-gray-500">
+          No recipes found. Try different ingredients.
+        </p>
+      )}
+
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 w-full max-w-7xl">
         {recipes.map((r, i) => (
-          <RecipeCard key={i} title={r.title} steps={r.steps} />
+          <RecipeCard
+            key={i}
+            title={r.title}
+            ingredients={r.ingredients}
+            steps={r.steps}
+          />
         ))}
       </div>
     </main>
